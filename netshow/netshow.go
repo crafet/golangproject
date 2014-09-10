@@ -61,9 +61,6 @@ func SetupServ() {
 	}
 }
 
-type mymux struct {
-}
-
 type State int
 
 const (
@@ -75,11 +72,10 @@ const (
 	UNPROVISION
 )
 
-
 func(s State) String() string {
 	switch s {
 	case GET_CATALOG:
-		return "Get Catalog"
+		return "GetCatalog"
 	case PROVISION:
 		return "Provision"
 	case BINDING:
@@ -135,14 +131,13 @@ func route_dispatch(path string, method string) State{
 	}
 	
 	switch p {
-	
 	case PATTERN_SERVICE_BINDINGS:
 		if lowerMethod == HTTP_METHOD_PUT || lowerMethod == HTTP_METHOD_POST {
 			step = BINDING	
 		} else if lowerMethod == HTTP_METHOD_DELETE {
 			step = UNBINDING
 		}
-		
+	//service-instance
 	case PATTERN_SERVICE_INSTANCES:
 		if lowerMethod == HTTP_METHOD_PUT || lowerMethod == HTTP_METHOD_POST {
 			step = PROVISION
@@ -152,6 +147,9 @@ func route_dispatch(path string, method string) State{
 	}
 	
 	return step
+}
+
+type mymux struct {
 }
 
 func (p *mymux) ServeHTTP(w http.ResponseWriter, r *http.Request) {

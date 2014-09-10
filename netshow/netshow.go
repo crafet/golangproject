@@ -64,17 +64,19 @@ func SetupServ() {
 type mymux struct {
 }
 
-type Schema int
+type State int
 
 const (
-	GET_CATALOG Schema = iota
+	UNKNOWN State = iota
+	GET_CATALOG
 	PROVISION
 	BINDING
 	UNBINDING
 	UNPROVISION
 )
 
-func(s Schema) String() string {
+
+func(s State) String() string {
 	switch s {
 	case GET_CATALOG:
 		return "Get Catalog"
@@ -83,7 +85,7 @@ func(s Schema) String() string {
 	case BINDING:
 	 	return "Binding"
 	case UNBINDING:
-		return "Unbiding"
+		return "Unbinding"
 	case UNPROVISION:
 		return "Unprovision"
 	}
@@ -91,20 +93,77 @@ func(s Schema) String() string {
 	return "Unknow Schema"
 }
 
-func TestSchema() {
-	state := PROVISION
-	f.Println("state: ", state)
-}
-func route(path string) {
+const (
+	HTTP_METHOD_GET = "get"
+	HTTP_METHOD_PUT = "put"
+	HTTP_METHOD_POST = "post"
+	HTTP_METHOD_DELETE = "delete"
+)
+
+const (
+	PATTERN_SERVICE_INSTANCES = "service_instances"
+	PATTERN_SERVICE_BINDINGS = "service_bindings"
+)
+
+//根据当前的path确定路由规则
+//返回step表示目前采用什么方法
+///v2/service_instances/:service-guid-id
+///v2/service_instances/:instance_id/service_bindings/:id
+//如果仅仅contain判断是否包含子串，这里都包含service_instance
+//因此调整顺序，先判断是否包含service_bindings，如果有break，不判断service_instances
+//这种方法有点tricky，不易维护，后面要修改掉，去掉对顺序的依赖
+
+func route_dispatch(path string, method string) State{
+	//如果是get方法，必然是获取catalog；如果是put/post/delete则再细分
 	
-} 
+	step := UNKNOWN
+	lowerMethod := strings.ToLower(method)
+	if lowerMethod == "get" {
+		step = GET_CATALOG
+	}
+	
+	patterns := []string {PATTERN_SERVICE_BINDINGS, PATTERN_SERVICE_INSTANCES}
+	p := ""
+	//必须用p将sp赋值出来，原因还未知！
+	for _, sp := range(patterns) {
+		b := strings.Contains(path, sp)
+		//hit
+		if b {
+			p = sp
+			break
+		}
+	}
+	
+	switch p {
+	
+	case PATTERN_SERVICE_BINDINGS:
+		if lowerMethod == HTTP_METHOD_PUT || lowerMethod == HTTP_METHOD_POST {
+			step = BINDING	
+		} else if lowerMethod == HTTP_METHOD_DELETE {
+			step = UNBINDING
+		}
+		
+	case PATTERN_SERVICE_INSTANCES:
+		if lowerMethod == HTTP_METHOD_PUT || lowerMethod == HTTP_METHOD_POST {
+			step = PROVISION
+		} else if lowerMethod == "delete" {
+			step = UNPROVISION
+		}	
+	}
+	
+	return step
+}
 
 func (p *mymux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	
 	// get URL.PATH
 	currPath := r.URL.Path
-	f.Fprintf(w, "current path is: %s\n", currPath)
+	method := r.Method
+	f.Fprintf(w, "current path is: %s, method is %s\n", currPath, method)
 	
+	
+	step := route_dispatch(currPath, method)
+	/*
 	if r.URL.Path == "/name" {
 		sayHelloName(w, r)
 	} else if r.URL.Path == "/next" {
@@ -115,6 +174,21 @@ func (p *mymux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.Println("Not Found!")
 		
 		http.NotFound(w, r)
+	}
+	*/
+	
+	//根据step设置回调函数
+	switch step {
+		case GET_CATALOG:
+		f.Println(step)
+		case PROVISION:
+		f.Println(step)
+		case BINDING:
+		f.Println(step)
+		case UNBINDING:
+		f.Println(step)
+		case UNPROVISION:
+		f.Println(step)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+
 	fmt.Println("go demo!")
 	
 	sub.Test()
@@ -25,7 +26,8 @@ func main() {
 	fmt.Println("====================")
 	
 	//netshow.SetupServ()
-	netshow.SetupCustomedServ()
+	//netshow.SetupCustomedServ()
+	netshow.TestSchema()
 	
 }
 

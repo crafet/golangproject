@@ -44,7 +44,10 @@ func showRequestInfo(w http.ResponseWriter, r *http.Request) {
 	f.Println("r.Trailer: ", r.Trailer)
 	f.Println("r.TransferEncoding: ", r.TransferEncoding)
 	f.Println("r.URL.schema: ", r.URL.Scheme)
-	f.Println("r.URL.User.Username:", r.URL.User.Username)
+	//username := r.URL.User.Username()
+	//p, _ := r.URL.User.Password()
+	//f.Println("r.URL.User.Username: ", username)
+	//f.Println("r.URL.User.Username: ", p)
 }
 
 func SetupServ() {
@@ -61,7 +64,47 @@ func SetupServ() {
 type mymux struct {
 }
 
+type Schema int
+
+const (
+	GET_CATALOG Schema = iota
+	PROVISION
+	BINDING
+	UNBINDING
+	UNPROVISION
+)
+
+func(s Schema) String() string {
+	switch s {
+	case GET_CATALOG:
+		return "Get Catalog"
+	case PROVISION:
+		return "Provision"
+	case BINDING:
+	 	return "Binding"
+	case UNBINDING:
+		return "Unbiding"
+	case UNPROVISION:
+		return "Unprovision"
+	}
+	
+	return "Unknow Schema"
+}
+
+func TestSchema() {
+	state := PROVISION
+	f.Println("state: ", state)
+}
+func route(path string) {
+	
+} 
+
 func (p *mymux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	
+	// get URL.PATH
+	currPath := r.URL.Path
+	f.Fprintf(w, "current path is: %s\n", currPath)
+	
 	if r.URL.Path == "/name" {
 		sayHelloName(w, r)
 	} else if r.URL.Path == "/next" {
@@ -70,6 +113,7 @@ func (p *mymux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		showRequestInfo(w, r)
 	} else {
 		f.Println("Not Found!")
+		
 		http.NotFound(w, r)
 	}
 }
